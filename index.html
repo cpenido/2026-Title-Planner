@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Title Marketing Support Planner</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>2026 Title Marketing Support Planner</h1>
+            <div class="user-info">
+                <input type="text" id="userName" placeholder="Enter your name" />
+                <button id="saveUser">Set User</button>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="titles">Title Overview</button>
+            <button class="tab-btn" data-tab="planning">Marketing Plans</button>
+            <button class="tab-btn" data-tab="allocation">Campaign Allocation</button>
+            <button class="tab-btn" data-tab="chatbot">AI Assistant</button>
+            <button class="tab-btn" data-tab="collaboration">Team Collaboration</button>
+        </nav>
+
+        <main>
+            <!-- Title Overview Tab -->
+            <div id="titles" class="tab-content active">
+                <div class="section-header">
+                    <h2>2026 Title Releases</h2>
+                    <div class="header-actions">
+                        <input type="file" id="excelImport" accept=".xlsx,.xls" style="display: none;">
+                        <button id="importExcel" class="btn-secondary">Import Excel</button>
+                        <button id="addTitle" class="btn-primary">Add New Title</button>
+                    </div>
+                </div>
+                <div class="titles-table-container">
+                    <table class="titles-table" id="titlesTable">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>Release Date</th>
+                                <th>Genre</th>
+                                <th>Priority</th>
+                                <th>Marketing Tier</th>
+                                <th>Social Following</th>
+                                <th>Audio Success</th>
+                                <th>Video Comfort</th>
+                                <th>Region</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="titlesTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Marketing Plans Tab -->
+            <div id="planning" class="tab-content">
+                <div class="section-header">
+                    <h2>Marketing Support Plans</h2>
+                    <select id="titleFilter">
+                        <option value="">All Titles</option>
+                    </select>
+                </div>
+                <div class="plans-container" id="plansContainer"></div>
+            </div>
+
+            <!-- Campaign Allocation Tab -->
+            <div id="allocation" class="tab-content">
+                <div class="section-header">
+                    <h2>Campaign Allocation Tracker</h2>
+                </div>
+                <div class="allocation-dashboard">
+                    <div class="allocation-counters">
+                        <div class="counter-card">
+                            <h3>Marquee Campaigns</h3>
+                            <div class="counter-display">
+                                <span id="marqueeUsed">0</span> / <span id="marqueeTotal">12</span>
+                            </div>
+                            <div class="counter-bar">
+                                <div id="marqueeBar" class="progress-bar"></div>
+                            </div>
+                        </div>
+                        <div class="counter-card">
+                            <h3>Blockbuster Campaigns</h3>
+                            <div class="counter-display">
+                                <span id="blockbusterUsed">0</span> / <span id="blockbusterTotal">6</span>
+                            </div>
+                            <div class="counter-bar">
+                                <div id="blockbusterBar" class="progress-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="allocation-settings">
+                        <h4>Allocation Settings</h4>
+                        <div class="form-group">
+                            <label>Total Marquee Campaigns:</label>
+                            <input type="number" id="setMarqueeTotal" value="12" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Blockbuster Campaigns:</label>
+                            <input type="number" id="setBlockbusterTotal" value="6" min="1">
+                        </div>
+                        <button id="updateAllocation" class="btn-primary">Update Allocation</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Assistant Tab -->
+            <div id="chatbot" class="tab-content">
+                <div class="section-header">
+                    <h2>AI Assistant for Title Selection & Marketing</h2>
+                    <div class="chat-status" id="chatStatus">Ready to help with title selection and marketing strategies</div>
+                </div>
+                <div class="chatbot-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-message bot-message">
+                            <div class="message-content">
+                                <strong>AI Assistant:</strong> Hello! I'm here to help you with title selection, marketing strategies, and author recommendations. You can ask me about:
+                                <ul>
+                                    <li>Marketing tier recommendations based on author performance</li>
+                                    <li>Social media following analysis</li>
+                                    <li>Genre-specific marketing strategies</li>
+                                    <li>Budget allocation suggestions</li>
+                                    <li>Campaign timing and coordination</li>
+                                </ul>
+                                What would you like to know?
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" placeholder="Ask about title selection, marketing strategies, or author recommendations...">
+                        <button id="sendChat" class="btn-primary">Send</button>
+                        <button id="clearChat" class="btn-secondary">Clear</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Collaboration Tab -->
+            <div id="collaboration" class="tab-content">
+                <div class="section-header">
+                    <h2>Team Activity & Comments</h2>
+                </div>
+                <div class="activity-feed" id="activityFeed"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for adding/editing titles -->
+    <div id="titleModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modalTitle">Add New Title</h3>
+            <form id="titleForm">
+                <input type="hidden" id="titleId" />
+                <div class="form-group">
+                    <label for="bookTitle">Title:</label>
+                    <input type="text" id="bookTitle" required />
+                </div>
+                <div class="form-group">
+                    <label for="author">Author:</label>
+                    <input type="text" id="author" required />
+                </div>
+                <div class="form-group">
+                    <label for="releaseDate">Release Date:</label>
+                    <input type="date" id="releaseDate" required />
+                </div>
+                <div class="form-group">
+                    <label for="genre">Genre:</label>
+                    <select id="genre">
+                        <option value="Fiction">Fiction</option>
+                        <option value="Non-Fiction">Non-Fiction</option>
+                        <option value="Romance">Romance</option>
+                        <option value="Mystery">Mystery</option>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Biography">Biography</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="priority">Priority Level:</label>
+                    <select id="priority">
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="audioSuccess">Audio Following/Success:</label>
+                    <select id="audioSuccess">
+                        <option value="High">High - Strong audio performance</option>
+                        <option value="Medium">Medium - Moderate audio success</option>
+                        <option value="Low">Low - Limited audio following</option>
+                        <option value="None">None - No audio track record</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="marketingTier">Recommended Marketing Tier:</label>
+                    <select id="marketingTier">
+                        <option value="">Auto-determine from data</option>
+                        <option value="Marquee">Marquee</option>
+                        <option value="Blockbuster">Blockbuster</option>
+                        <option value="Standard">Standard</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="socialFollowing">Social Following:</label>
+                    <input type="number" id="socialFollowing" placeholder="Total followers (auto-populated via AI)">
+                    <small style="color: #666; font-size: 12px;">Leave blank to auto-fetch via Amazon Q/Cedric</small>
+                </div>
+                <div class="form-group">
+                    <label for="videoComfort">Video Content Comfort:</label>
+                    <select id="videoComfort">
+                        <option value="High">High - Actively creates video content</option>
+                        <option value="Medium">Medium - Comfortable with video</option>
+                        <option value="Low">Low - Limited video experience</option>
+                        <option value="None">None - Prefers no video</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="region">Primary Region:</label>
+                    <select id="region">
+                        <option value="US">US</option>
+                        <option value="UK">UK</option>
+                        <option value="Global">Global</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editorialReason">Editorial Reason for Support:</label>
+                    <textarea id="editorialReason" placeholder="Why should this author/title receive paid marketing support?"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Title</button>
+                    <button type="button" class="btn-secondary" id="cancelTitle">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for marketing plans -->
+    <div id="planModal" class="modal">
+        <div class="modal-content large">
+            <span class="close">&times;</span>
+            <h3 id="planModalTitle">Marketing Support Plan</h3>
+            <form id="planForm">
+                <input type="hidden" id="planTitleId" />
+                <div class="plan-sections">
+                    <div class="plan-section">
+                        <h4>Campaign Strategy</h4>
+                        <textarea id="campaignStrategy" placeholder="Describe the overall marketing strategy..."></textarea>
+                    </div>
+                    <div class="plan-section">
+                        <h4>Target Audience</h4>
+                        <textarea id="targetAudience" placeholder="Define the target audience..."></textarea>
+                    </div>
+                    <div class="plan-section">
+                        <h4>Marketing Channels</h4>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="Social Media"> Social Media</label>
+                            <label><input type="checkbox" value="Email Marketing"> Email Marketing</label>
+                            <label><input type="checkbox" value="Influencer Partnerships"> Influencer Partnerships</label>
+                            <label><input type="checkbox" value="PR & Media"> PR & Media</label>
+                            <label><input type="checkbox" value="Paid Advertising"> Paid Advertising</label>
+                            <label><input type="checkbox" value="Events & Signings"> Events & Signings</label>
+                        </div>
+                    </div>
+                    <div class="plan-section">
+                        <h4>Budget Allocation</h4>
+                        <input type="number" id="budget" placeholder="Marketing budget ($)" />
+                    </div>
+                    <div class="plan-section">
+                        <h4>Key Milestones</h4>
+                        <textarea id="milestones" placeholder="List key marketing milestones and dates..."></textarea>
+                    </div>
+                    <div class="plan-section">
+                        <h4>Team Members</h4>
+                        <input type="text" id="teamMembers" placeholder="Assigned team members (comma-separated)" />
+                    </div>
+                    <div class="plan-section">
+                        <h4>Campaign Type & Region</h4>
+                        <div class="campaign-selection">
+                            <div class="form-group">
+                                <label for="campaignType">Campaign Level:</label>
+                                <select id="campaignType">
+                                    <option value="">Select Campaign Type</option>
+                                    <option value="Marquee">Marquee</option>
+                                    <option value="Blockbuster">Blockbuster</option>
+                                    <option value="Standard">Standard</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Campaign Region:</label>
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox" value="US" id="regionUS"> US Campaign</label>
+                                    <label><input type="checkbox" value="UK" id="regionUK"> UK Campaign</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Plan</button>
+                    <button type="button" class="btn-secondary" id="cancelPlan">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
