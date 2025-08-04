@@ -11,6 +11,7 @@ class TitlePlanningDashboard {
         this.chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
         this.activeUsers = new Set();
         this.activityPaused = false;
+        this.lastKnownUpdate = localStorage.getItem('lastUpdate');
         
         this.loadFromCloud();
         this.initializeRealtime();
@@ -57,6 +58,7 @@ class TitlePlanningDashboard {
 
     init() {
         this.setupEventListeners();
+        this.setupRealtimeSync();
         this.loadUserInfo();
         this.renderDashboard();
         this.renderTitles();
@@ -839,20 +841,20 @@ class TitlePlanningDashboard {
     }
     
     async saveData() {
-        // Save to localStorage as backup
+        // Save to localStorage with timestamp for sync
+        const timestamp = Date.now();
         localStorage.setItem('titles', JSON.stringify(this.titles));
         localStorage.setItem('plans', JSON.stringify(this.plans));
         localStorage.setItem('activities', JSON.stringify(this.activities));
         localStorage.setItem('allocation', JSON.stringify(this.allocation));
         localStorage.setItem('chatHistory', JSON.stringify(this.chatHistory));
+        localStorage.setItem('lastUpdate', timestamp.toString());
         
-        // Real-time sync
-        if (window.realtimeSync) {
-            await window.realtimeSync.syncData('titles', this.titles);
-            await window.realtimeSync.syncData('plans', this.plans);
-            await window.realtimeSync.syncData('activities', this.activities);
-            await window.realtimeSync.syncData('allocation', this.allocation);
-        }
+        // Trigger sync event for other tabs
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: 'lastUpdate',
+            newValue: timestamp.toString()
+        }));
         
         // Update dashboard
         this.renderDashboard();
@@ -1107,6 +1109,59 @@ class TitlePlanningDashboard {
         if (score >= 25) return 'Author Branding';
         if (score >= 15) return 'Gold Books';
         return 'Momentum';
+    }
+    
+    setupRealtimeSync() {
+        // Listen for storage changes from other tabs/users
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'lastUpdate' && e.newValue !== e.oldValue) {
+                this.syncFromStorage();
+            }
+        });
+        
+        // Poll for changes every 2 seconds
+        setInterval(() => {
+            this.checkForUpdates();
+        }, 2000);
+    }
+    
+    checkForUpdates() {
+        const lastUpdate = localStorage.getItem('lastUpdate');
+        if (lastUpdate && lastUpdate !== this.lastKnownUpdate) {
+            this.lastKnownUpdate = lastUpdate;
+            this.syncFromStorage();
+        }
+    }
+    
+    syncFromStorage() {
+        const newTitles = JSON.parse(localStorage.getItem('titles') || '[]');
+        const newPlans = JSON.parse(localStorage.getItem('plans') || '[]');
+        const newActivities = JSON.parse(localStorage.getItem('activities') || '[]');
+        const newAllocation = JSON.parse(localStorage.getItem('allocation') || '{}');
+        
+        // Only update if data actually changed
+        if (JSON.stringify(newTitles) !== JSON.stringify(this.titles)) {
+            this.titles = newTitles;
+            this.renderTitles();
+            this.updateTitleFilter();
+        }
+        
+        if (JSON.stringify(newPlans) !== JSON.stringify(this.plans)) {
+            this.plans = newPlans;
+            this.renderPlans();
+        }
+        
+        if (JSON.stringify(newActivities) !== JSON.stringify(this.activities)) {
+            this.activities = newActivities;
+            this.renderActivity();
+        }
+        
+        if (JSON.stringify(newAllocation) !== JSON.stringify(this.allocation)) {
+            this.allocation = newAllocation;
+            this.renderAllocation();
+        }
+        
+        this.renderDashboard();
     }
     
     getQuarterFromDate(dateString) {
