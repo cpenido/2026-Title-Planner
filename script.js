@@ -851,6 +851,10 @@ class TitlePlanningDashboard {
                 // Map common column names to our data structure
                 if (header.includes('title') || header.includes('book')) {
                     obj.title = value;
+                } else if (header.includes('author_first')) {
+                    obj.authorFirst = value;
+                } else if (header.includes('author_last')) {
+                    obj.authorLast = value;
                 } else if (header.includes('author') || header.includes('writer')) {
                     obj.author = value;
                 } else if (header.includes('date') || header.includes('release') || header.includes('pub')) {
@@ -872,8 +876,13 @@ class TitlePlanningDashboard {
                 }
             });
             
+            // Combine author first and last names if available
+            if (obj.authorFirst && obj.authorLast) {
+                obj.author = `${obj.authorFirst} ${obj.authorLast}`;
+            }
+            
             return obj;
-        }).filter(obj => obj.title && obj.author); // Only include rows with title and author
+        }).filter(obj => obj.title && (obj.author || (obj.authorFirst && obj.authorLast))); // Only include rows with title and author
     }
     
     processExcelData(data) {
@@ -1256,8 +1265,24 @@ What specific area would you like to explore further?`;
                     socialFollowing: 1200000,
                     audioSuccess: 'High',
                     videoComfort: 'Medium',
-                    region: 'US',
+                    region: 'UK',
                     editorialReason: 'Bestselling romance author with dedicated fanbase',
+                    createdBy: 'System',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: '3',
+                    title: 'Der Schatten des Windes',
+                    author: 'Carlos Ruiz Zafón',
+                    releaseDate: '2026-09-10',
+                    genre: 'Fiction',
+                    priority: 'Medium',
+                    marketingTier: 'Marquee Mini',
+                    socialFollowing: 250000,
+                    audioSuccess: 'Medium',
+                    videoComfort: 'Low',
+                    region: 'DE',
+                    editorialReason: 'Popular European author with strong German market presence',
                     createdBy: 'System',
                     createdAt: new Date().toISOString()
                 }
