@@ -1,102 +1,79 @@
-// Cloud Sync Module for Multi-User Collaboration
+// Simple Multi-User Sync using localStorage broadcast
 class CloudSync {
     constructor() {
-        this.binId = '676a1b2c8e4aa6046a0b1234';
-        this.apiKey = '$2a$10$9vKvO9QyP5l8W8mIFuZ9Q.5tY7gH3pL2nR4sT6uV8wX0yZ1aB2cD3e';
-        this.baseUrl = 'https://api.jsonbin.io/v3/b';
         this.lastSync = 0;
-        this.syncInterval = 3000; // 3 seconds
-        this.isOnline = navigator.onLine;
-        this.pendingChanges = [];
+        this.syncInterval = 1000; // 1 second
+        this.storageKey = 'title-planner-shared-data';
+        this.userKey = 'title-planner-user-' + Math.random().toString(36).substr(2, 9);
         
-        this.setupOnlineDetection();
         this.startSyncLoop();
     }
     
-    setupOnlineDetection() {
-        window.addEventListener('online', () => {
-            this.isOnline = true;
-            this.syncPendingChanges();
-        });
-        
-        window.addEventListener('offline', () => {
-            this.isOnline = false;
-        });
-    }
-    
     async saveToCloud(data) {
-        if (!this.isOnline) {
-            this.pendingChanges.push(data);
-            return false;
-        }
-        
         try {
-            const response = await fetch(`${this.baseUrl}/${this.binId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': this.apiKey,
-                    'X-Bin-Versioning': 'false'
-                },
-                body: JSON.stringify({
-                    ...data,
-                    lastUpdate: Date.now(),
-                    syncVersion: this.generateSyncVersion()
-                })
-            });
+            const payload = {
+                ...data,
+                lastUpdate: Date.now(),
+                syncVersion: this.generateSyncVersion(),
+                savedBy: data.updatedBy || 'Unknown'
+            };
             
-            if (response.ok) {
-                this.lastSync = Date.now();
-                return true;
-            }
+            // Save to shared localStorage key
+            localStorage.setItem(this.storageKey, JSON.stringify(payload));
             
-            throw new Error(`HTTP ${response.status}`);
+            // Broadcast to other tabs/windows
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: this.storageKey,
+                newValue: JSON.stringify(payload),
+                url: window.location.href
+            }));
+            
+            this.lastSync = payload.lastUpdate;
+            return true;
         } catch (error) {
-            console.log('Cloud save failed:', error.message);
-            this.pendingChanges.push(data);
+            console.log('Save failed:', error.message);
             return false;
         }
     }
     
     async loadFromCloud() {
-        if (!this.isOnline) return null;
-        
         try {
-            const response = await fetch(`${this.baseUrl}/${this.binId}/latest`, {
-                headers: {
-                    'X-Master-Key': this.apiKey
-                }
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                return result.record;
-            }
-            
-            throw new Error(`HTTP ${response.status}`);
+            const stored = localStorage.getItem(this.storageKey);
+            return stored ? JSON.parse(stored) : null;
         } catch (error) {
-            console.log('Cloud load failed:', error.message);
+            console.log('Load failed:', error.message);
             return null;
         }
     }
     
-    async syncPendingChanges() {
-        while (this.pendingChanges.length > 0 && this.isOnline) {
-            const data = this.pendingChanges.shift();
-            await this.saveToCloud(data);
-        }
-    }
-    
     startSyncLoop() {
-        setInterval(async () => {
-            if (this.isOnline) {
-                const cloudData = await this.loadFromCloud();
-                if (cloudData && cloudData.lastUpdate > this.lastSync) {
-                    this.notifyDataChange(cloudData);
-                    this.lastSync = cloudData.lastUpdate;
+        // Listen for storage changes from other tabs/windows
+        window.addEventListener('storage', (e) => {
+            if (e.key === this.storageKey && e.newValue) {
+                try {
+                    const data = JSON.parse(e.newValue);
+                    if (data.lastUpdate > this.lastSync && data.savedBy !== this.getCurrentUser()) {
+                        this.notifyDataChange(data);
+                        this.lastSync = data.lastUpdate;
+                    }
+                } catch (error) {
+                    console.log('Storage event error:', error);
                 }
             }
+        });
+        
+        // Poll for changes every second
+        setInterval(async () => {
+            const cloudData = await this.loadFromCloud();
+            if (cloudData && cloudData.lastUpdate > this.lastSync && cloudData.savedBy !== this.getCurrentUser()) {
+                this.notifyDataChange(cloudData);
+                this.lastSync = cloudData.lastUpdate;
+            }
         }, this.syncInterval);
+    }
+    
+    getCurrentUser() {
+        return localStorage.getItem('currentUser') || 'Unknown';
     }
     
     notifyDataChange(data) {
@@ -109,8 +86,8 @@ class CloudSync {
     
     getConnectionStatus() {
         return {
-            online: this.isOnline,
-            pendingChanges: this.pendingChanges.length,
+            online: true,
+            pendingChanges: 0,
             lastSync: this.lastSync
         };
     }

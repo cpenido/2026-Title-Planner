@@ -858,7 +858,9 @@ class TitlePlanningDashboard {
             updatedBy: this.currentUser
         };
         
-        if (window.cloudSync) {
+        if (window.realCloudSync) {
+            await window.realCloudSync.saveToCloud(data);
+        } else if (window.cloudSync) {
             await window.cloudSync.saveToCloud(data);
         }
         
