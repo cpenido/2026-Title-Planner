@@ -287,6 +287,8 @@ class TitlePlanningDashboard {
         document.getElementById('priorityFilter').addEventListener('change', () => this.applyFilters());
         document.getElementById('tierFilter').addEventListener('change', () => this.applyFilters());
         document.getElementById('regionFilter').addEventListener('change', () => this.applyFilters());
+        document.getElementById('imprintFilter').addEventListener('change', () => this.applyFilters());
+        document.getElementById('ammFilter').addEventListener('change', () => this.applyFilters());
         document.getElementById('clearFilters').addEventListener('click', () => this.clearFilters());
         
         // Chatbot
@@ -1481,11 +1483,15 @@ What specific area would you like to explore further?`;
         const priorities = ['High', 'Medium', 'Low'];
         const tiers = ['Mega Blockbuster', 'Marquee Me', 'Marquee Mini', 'BPub/Audio', 'Author Branding', 'Gold Books', 'Momentum'];
         const regions = [...new Set(this.titles.map(t => t.region))].sort();
+        const imprints = [...new Set(this.titles.map(t => t.imprint).filter(i => i))].sort();
+        const amms = [...new Set(this.titles.map(t => t.amm).filter(a => a))].sort();
         
         this.populateSelect('genreFilter', genres);
         this.populateSelect('priorityFilter', priorities);
         this.populateSelect('tierFilter', tiers);
         this.populateSelect('regionFilter', regions);
+        this.populateSelect('imprintFilter', imprints);
+        this.populateSelect('ammFilter', amms);
     }
     
     populateSelect(selectId, options) {
@@ -1511,6 +1517,8 @@ What specific area would you like to explore further?`;
         const priorityFilter = document.getElementById('priorityFilter').value;
         const tierFilter = document.getElementById('tierFilter').value;
         const regionFilter = document.getElementById('regionFilter').value;
+        const imprintFilter = document.getElementById('imprintFilter').value;
+        const ammFilter = document.getElementById('ammFilter').value;
         
         const rows = document.querySelectorAll('#titlesTableBody tr');
         rows.forEach(row => {
@@ -1521,20 +1529,22 @@ What specific area would you like to explore further?`;
             const priority = row.cells[9].textContent;
             const tier = row.cells[10].textContent;
             const pr = row.cells[12].textContent.toLowerCase();
-            const imprint = row.cells[13].textContent.toLowerCase();
+            const imprint = row.cells[13].textContent;
             const editor = row.cells[14].textContent.toLowerCase();
-            const amm = row.cells[15].textContent.toLowerCase();
+            const amm = row.cells[15].textContent;
             const region = row.cells[21].textContent;
             
-            const matchesTitle = !titleSearch || title.includes(titleSearch) || pr.includes(titleSearch) || imprint.includes(titleSearch) || editor.includes(titleSearch) || amm.includes(titleSearch);
+            const matchesTitle = !titleSearch || title.includes(titleSearch) || pr.includes(titleSearch) || imprint.toLowerCase().includes(titleSearch) || editor.includes(titleSearch) || amm.toLowerCase().includes(titleSearch);
             const matchesAuthor = !authorSearch || author.includes(authorSearch);
             const matchesDate = !dateFilter || date.includes(dateFilter);
             const matchesGenre = !genreFilter || genre === genreFilter;
             const matchesPriority = !priorityFilter || priority === priorityFilter;
             const matchesTier = !tierFilter || tier.includes(tierFilter);
             const matchesRegion = !regionFilter || region === regionFilter;
+            const matchesImprint = !imprintFilter || imprint === imprintFilter;
+            const matchesAmm = !ammFilter || amm === ammFilter;
             
-            row.style.display = matchesTitle && matchesAuthor && matchesDate && matchesGenre && matchesPriority && matchesTier && matchesRegion ? '' : 'none';
+            row.style.display = matchesTitle && matchesAuthor && matchesDate && matchesGenre && matchesPriority && matchesTier && matchesRegion && matchesImprint && matchesAmm ? '' : 'none';
         });
     }
     
@@ -1546,6 +1556,8 @@ What specific area would you like to explore further?`;
         document.getElementById('priorityFilter').value = '';
         document.getElementById('tierFilter').value = '';
         document.getElementById('regionFilter').value = '';
+        document.getElementById('imprintFilter').value = '';
+        document.getElementById('ammFilter').value = '';
         this.applyFilters();
     }
 }
