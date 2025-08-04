@@ -922,9 +922,13 @@ class TitlePlanningDashboard {
             headers.forEach((header, index) => {
                 const value = row[index];
                 
-                // Map first column (A) as Title ID regardless of header name
+                // Map columns by position for specific fields
                 if (index === 0) {
-                    obj.titleId = value;
+                    obj.titleId = value; // Column A
+                } else if (index === 9) {
+                    obj.pr = value; // Column J
+                } else if (index === 10) {
+                    obj.imprint = value; // Column K
                 } else if (header.includes('title_id') || header.includes('titleid')) {
                     obj.titleId = value;
                 } else if (header.includes('title') || header.includes('book')) {
@@ -947,10 +951,6 @@ class TitlePlanningDashboard {
                     obj.priority = value;
                 } else if (header.includes('sales_tier') || header.includes('salestier')) {
                     obj.salesTier = value;
-                } else if (header.includes('pr')) {
-                    obj.pr = value;
-                } else if (header.includes('imprint')) {
-                    obj.imprint = value;
                 } else if (header.includes('editor')) {
                     obj.editor = value;
                 } else if (header.includes('amm')) {
@@ -1514,15 +1514,19 @@ What specific area would you like to explore further?`;
         
         const rows = document.querySelectorAll('#titlesTableBody tr');
         rows.forEach(row => {
-            const title = row.cells[2].textContent.toLowerCase();
-            const author = row.cells[3].textContent.toLowerCase();
-            const date = row.cells[4].textContent;
-            const genre = row.cells[5].textContent;
-            const priority = row.cells[6].textContent;
-            const tier = row.cells[7].textContent;
-            const region = row.cells[10].textContent;
+            const title = row.cells[3].textContent.toLowerCase();
+            const author = row.cells[4].textContent.toLowerCase();
+            const date = row.cells[7].textContent;
+            const genre = row.cells[8].textContent;
+            const priority = row.cells[9].textContent;
+            const tier = row.cells[10].textContent;
+            const pr = row.cells[12].textContent.toLowerCase();
+            const imprint = row.cells[13].textContent.toLowerCase();
+            const editor = row.cells[14].textContent.toLowerCase();
+            const amm = row.cells[15].textContent.toLowerCase();
+            const region = row.cells[21].textContent;
             
-            const matchesTitle = !titleSearch || title.includes(titleSearch);
+            const matchesTitle = !titleSearch || title.includes(titleSearch) || pr.includes(titleSearch) || imprint.includes(titleSearch) || editor.includes(titleSearch) || amm.includes(titleSearch);
             const matchesAuthor = !authorSearch || author.includes(authorSearch);
             const matchesDate = !dateFilter || date.includes(dateFilter);
             const matchesGenre = !genreFilter || genre === genreFilter;
