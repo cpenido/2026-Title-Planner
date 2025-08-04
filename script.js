@@ -257,6 +257,7 @@ class TitlePlanningDashboard {
         document.querySelectorAll('.close').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.target.closest('.modal').style.display = 'none';
+                document.body.style.overflow = '';
             });
         });
 
@@ -299,7 +300,44 @@ class TitlePlanningDashboard {
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';
+                document.body.style.overflow = '';
             }
+        });
+        
+        // Prevent modal scroll issues
+        this.setupModalScrollFix();
+    }
+    
+    setupModalScrollFix() {
+        // Prevent main page scrolling when scrolling within modals
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('wheel', (e) => {
+                e.stopPropagation();
+            }, { passive: true });
+            
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.addEventListener('wheel', (e) => {
+                    e.stopPropagation();
+                }, { passive: true });
+            }
+        });
+        
+        // Prevent body scroll when modal is open
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        if (modal.style.display === 'block') {
+                            document.body.style.overflow = 'hidden';
+                        } else {
+                            document.body.style.overflow = '';
+                        }
+                    }
+                });
+            });
+            observer.observe(modal, { attributes: true });
         });
     }
 
@@ -360,6 +398,7 @@ class TitlePlanningDashboard {
 
     closeTitleModal() {
         document.getElementById('titleModal').style.display = 'none';
+        document.body.style.overflow = '';
     }
 
     saveTitle(e) {
@@ -453,6 +492,7 @@ class TitlePlanningDashboard {
 
     closePlanModal() {
         document.getElementById('planModal').style.display = 'none';
+        document.body.style.overflow = '';
     }
 
     savePlan(e) {
