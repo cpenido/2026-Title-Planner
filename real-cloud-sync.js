@@ -5,9 +5,12 @@ class RealCloudSync {
         this.lastSync = 0;
         this.syncInterval = 2000; // 2 seconds
         this.storageKey = 'title-planner-gist-id';
+        this.currentUser = null;
+        this.onlineUsers = new Set();
         
         this.initializeGist();
         this.startSyncLoop();
+        this.startHeartbeat();
     }
     
     async initializeGist() {
@@ -64,7 +67,8 @@ class RealCloudSync {
             const payload = {
                 ...data,
                 lastUpdate: Date.now(),
-                syncVersion: this.generateSyncVersion()
+                syncVersion: this.generateSyncVersion(),
+                onlineUsers: Array.from(this.onlineUsers)
             };
             
             const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
@@ -130,11 +134,80 @@ class RealCloudSync {
         return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
     
+    startHeartbeat() {
+        setInterval(() => {
+            if (this.currentUser && this.gistId) {
+                this.onlineUsers.add(this.currentUser);
+                this.updateUserPresence();
+            }
+        }, 5000); // Update presence every 5 seconds
+    }
+    
+    async updateUserPresence() {
+        if (!this.gistId) return;
+        
+        try {
+            const response = await fetch(`https://api.github.com/gists/${this.gistId}`);
+            if (response.ok) {
+                const gist = await response.json();
+                const content = JSON.parse(gist.files['dashboard-data.json'].content);
+                
+                // Add current user to online users
+                const onlineUsers = new Set(content.onlineUsers || []);
+                onlineUsers.add(this.currentUser);
+                
+                // Remove users who haven't been seen in 15 seconds
+                const now = Date.now();
+                const userTimestamps = content.userTimestamps || {};
+                userTimestamps[this.currentUser] = now;
+                
+                Object.keys(userTimestamps).forEach(user => {
+                    if (now - userTimestamps[user] > 15000) {
+                        onlineUsers.delete(user);
+                        delete userTimestamps[user];
+                    }
+                });
+                
+                // Update the gist with new presence data
+                const updatedContent = {
+                    ...content,
+                    onlineUsers: Array.from(onlineUsers),
+                    userTimestamps
+                };
+                
+                await fetch(`https://api.github.com/gists/${this.gistId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        files: {
+                            'dashboard-data.json': {
+                                content: JSON.stringify(updatedContent)
+                            }
+                        }
+                    })
+                });
+                
+                this.onlineUsers = onlineUsers;
+                window.dispatchEvent(new CustomEvent('usersOnlineChanged', { 
+                    detail: Array.from(onlineUsers) 
+                }));
+            }
+        } catch (error) {
+            console.log('Presence update failed:', error.message);
+        }
+    }
+    
+    setCurrentUser(username) {
+        this.currentUser = username;
+        this.onlineUsers.add(username);
+    }
+    
     getConnectionStatus() {
         return {
             online: !!this.gistId,
             gistId: this.gistId,
-            lastSync: this.lastSync
+            lastSync: this.lastSync,
+            onlineUsers: Array.from(this.onlineUsers)
         };
     }
     

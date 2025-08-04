@@ -70,6 +70,7 @@ class TitlePlanningDashboard {
         this.initializeChatbot();
         this.loadSampleData();
         this.startDashboardUpdates();
+        this.setupOnlineUsersListener();
     }
     
     async initializeRealtime() {
@@ -221,6 +222,25 @@ class TitlePlanningDashboard {
         }, 30000);
     }
     
+    setupOnlineUsersListener() {
+        window.addEventListener('usersOnlineChanged', (event) => {
+            this.updateOnlineUsers(event.detail);
+        });
+    }
+    
+    updateOnlineUsers(users = null) {
+        if (!users && window.realCloudSync) {
+            const status = window.realCloudSync.getConnectionStatus();
+            users = status.onlineUsers;
+        }
+        
+        if (users && users.length > 0) {
+            document.getElementById('activeUsers').textContent = `${users.length} user${users.length > 1 ? 's' : ''} online: ${users.join(', ')}`;
+        } else {
+            document.getElementById('activeUsers').textContent = '1 user online';
+        }
+    }
+    
     toggleActivityUpdates() {
         this.activityPaused = !this.activityPaused;
         const btn = document.getElementById('pauseActivity');
@@ -363,6 +383,11 @@ class TitlePlanningDashboard {
         if (userName) {
             this.currentUser = userName;
             localStorage.setItem('currentUser', userName);
+            
+            if (window.realCloudSync) {
+                window.realCloudSync.setCurrentUser(userName);
+            }
+            
             this.addActivity(`${userName} joined the planning session`);
         }
     }
