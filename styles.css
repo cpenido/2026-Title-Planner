@@ -424,6 +424,32 @@ header h1 {
     background: #d70015;
 }
 
+/* Bulk selection styling */
+.titles-table th:first-child {
+    width: 120px;
+    text-align: center;
+}
+
+.titles-table th:first-child label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.title-checkbox {
+    cursor: pointer;
+    transform: scale(1.2);
+}
+
+#selectAll {
+    cursor: pointer;
+    transform: scale(1.2);
+}
+
 .titles-table-container {
     background: white;
     border-radius: 12px;
