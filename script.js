@@ -376,13 +376,23 @@ class TitlePlanningDashboard {
         if (title) {
             document.getElementById('modalTitle').textContent = 'Edit Title';
             document.getElementById('titleId').value = title.id;
+            document.getElementById('titleIdField').value = title.titleId || title.id;
             document.getElementById('bookTitle').value = title.title;
             document.getElementById('author').value = title.author;
+            document.getElementById('asin').value = title.asin || '';
+            document.getElementById('status').value = title.status || 'In Development';
             document.getElementById('releaseDate').value = title.releaseDate;
             document.getElementById('genre').value = title.genre;
             document.getElementById('priority').value = title.priority;
             document.getElementById('audioSuccess').value = title.audioSuccess || 'None';
             document.getElementById('marketingTier').value = title.marketingTier || '';
+            document.getElementById('salesTier').value = title.salesTier || 'Tier 4';
+            document.getElementById('pr').value = title.pr || '';
+            document.getElementById('imprint').value = title.imprint || 'Random House';
+            document.getElementById('editor').value = title.editor || '';
+            document.getElementById('amm').value = title.amm || '';
+            document.getElementById('pubQuarter').value = title.pubQuarter || this.getQuarterFromDate(title.releaseDate);
+            document.getElementById('selectionStrategy').value = title.selectionStrategy || 'Data-Driven';
             document.getElementById('socialFollowing').value = title.socialFollowing || '';
             document.getElementById('videoComfort').value = title.videoComfort || 'None';
             document.getElementById('region').value = title.region || 'US';
@@ -391,6 +401,10 @@ class TitlePlanningDashboard {
             document.getElementById('modalTitle').textContent = 'Add New Title';
             form.reset();
             document.getElementById('titleId').value = '';
+            document.getElementById('status').value = 'In Development';
+            document.getElementById('salesTier').value = 'Tier 4';
+            document.getElementById('imprint').value = 'Random House';
+            document.getElementById('selectionStrategy').value = 'Data-Driven';
         }
         
         modal.style.display = 'block';
@@ -406,8 +420,11 @@ class TitlePlanningDashboard {
         
         const titleData = {
             id: document.getElementById('titleId').value || Date.now().toString(),
+            titleId: document.getElementById('titleIdField').value || document.getElementById('titleId').value || Date.now().toString(),
             title: document.getElementById('bookTitle').value,
             author: document.getElementById('author').value,
+            asin: document.getElementById('asin').value,
+            status: document.getElementById('status').value,
             releaseDate: document.getElementById('releaseDate').value,
             genre: document.getElementById('genre').value,
             priority: document.getElementById('priority').value,
@@ -418,6 +435,13 @@ class TitlePlanningDashboard {
                 audioSuccess: document.getElementById('audioSuccess').value,
                 videoComfort: document.getElementById('videoComfort').value
             }),
+            salesTier: document.getElementById('salesTier').value,
+            pr: document.getElementById('pr').value,
+            imprint: document.getElementById('imprint').value,
+            editor: document.getElementById('editor').value,
+            amm: document.getElementById('amm').value,
+            pubQuarter: document.getElementById('pubQuarter').value,
+            selectionStrategy: document.getElementById('selectionStrategy').value,
             socialFollowing: parseInt(document.getElementById('socialFollowing').value) || this.getSocialFollowing(document.getElementById('author').value),
             videoComfort: document.getElementById('videoComfort').value,
             region: document.getElementById('region').value,
@@ -558,12 +582,22 @@ class TitlePlanningDashboard {
             row.innerHTML = `
                 <td><input type="checkbox" class="title-checkbox" data-id="${title.id}"></td>
                 <td><span class="ranking-badge">${index + 1}</span></td>
+                <td>${title.titleId || title.id}</td>
                 <td class="title-cell">${title.title}</td>
                 <td class="author-cell">${title.author}</td>
+                <td>${title.asin || 'N/A'}</td>
+                <td><span class="status-badge">${title.status || 'In Development'}</span></td>
                 <td>${releaseDate}</td>
                 <td>${title.genre}</td>
                 <td><span class="priority ${title.priority.toLowerCase()}">${title.priority}</span></td>
                 <td>${marketingTier}</td>
+                <td>${title.salesTier || 'Tier 4'}</td>
+                <td>${title.pr || 'N/A'}</td>
+                <td>${title.imprint || 'N/A'}</td>
+                <td>${title.editor || 'N/A'}</td>
+                <td>${title.amm || 'N/A'}</td>
+                <td>${title.pubQuarter || 'N/A'}</td>
+                <td>${title.selectionStrategy || 'N/A'}</td>
                 <td><span class="social-count">${socialFollowing}</span></td>
                 <td>${audioIndicator}</td>
                 <td>${videoIndicator}</td>
@@ -889,7 +923,9 @@ class TitlePlanningDashboard {
                 const value = row[index];
                 
                 // Map common column names to our data structure
-                if (header.includes('title') || header.includes('book')) {
+                if (header.includes('title_id') || header.includes('titleid')) {
+                    obj.titleId = value;
+                } else if (header.includes('title') || header.includes('book')) {
                     obj.title = value;
                 } else if (header.includes('author_first')) {
                     obj.authorFirst = value;
@@ -897,12 +933,30 @@ class TitlePlanningDashboard {
                     obj.authorLast = value;
                 } else if (header.includes('author') || header.includes('writer')) {
                     obj.author = value;
+                } else if (header.includes('asin')) {
+                    obj.asin = value;
+                } else if (header.includes('status')) {
+                    obj.status = value;
                 } else if (header.includes('date') || header.includes('release') || header.includes('pub')) {
                     obj.releaseDate = this.parseDate(value);
                 } else if (header.includes('genre') || header.includes('category')) {
                     obj.genre = value;
                 } else if (header.includes('priority') || header.includes('tier')) {
                     obj.priority = value;
+                } else if (header.includes('sales_tier') || header.includes('salestier')) {
+                    obj.salesTier = value;
+                } else if (header.includes('pr')) {
+                    obj.pr = value;
+                } else if (header.includes('imprint')) {
+                    obj.imprint = value;
+                } else if (header.includes('editor')) {
+                    obj.editor = value;
+                } else if (header.includes('amm')) {
+                    obj.amm = value;
+                } else if (header.includes('quarter')) {
+                    obj.pubQuarter = value;
+                } else if (header.includes('selection') || header.includes('strategy')) {
+                    obj.selectionStrategy = value;
                 } else if (header.includes('region') || header.includes('market')) {
                     obj.region = value;
                 } else if (header.includes('audio')) {
@@ -938,12 +992,22 @@ class TitlePlanningDashboard {
             if (!existingTitle) {
                 const titleData = {
                     id: Date.now().toString() + Math.random(),
+                    titleId: row.titleId || Date.now().toString() + Math.random(),
                     title: row.title || 'Untitled',
                     author: row.author || (row.authorFirst && row.authorLast ? `${row.authorFirst} ${row.authorLast}` : 'Unknown Author'),
+                    asin: row.asin || '',
+                    status: row.status || 'In Development',
                     releaseDate: row.releaseDate || '2026-01-01',
                     genre: row.genre || 'Fiction',
                     priority: this.determinePriority(row),
                     marketingTier: this.determineMarketingTier(row),
+                    salesTier: row.salesTier || 'Tier 4',
+                    pr: row.pr || '',
+                    imprint: row.imprint || 'Random House',
+                    editor: row.editor || '',
+                    amm: row.amm || '',
+                    pubQuarter: row.pubQuarter || this.getQuarterFromDate(row.releaseDate || '2026-01-01'),
+                    selectionStrategy: row.selectionStrategy || 'Data-Driven',
                     socialFollowing: row.socialFollowing || this.getSocialFollowing(row.author || `${row.authorFirst} ${row.authorLast}`),
                     audioSuccess: row.audioSuccess || 'None',
                     videoComfort: row.videoComfort || 'None',
@@ -1039,6 +1103,18 @@ class TitlePlanningDashboard {
         if (score >= 25) return 'Author Branding';
         if (score >= 15) return 'Gold Books';
         return 'Momentum';
+    }
+    
+    getQuarterFromDate(dateString) {
+        if (!dateString) return 'Q1 2026';
+        const date = new Date(dateString);
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        
+        if (month <= 3) return `Q1 ${year}`;
+        if (month <= 6) return `Q2 ${year}`;
+        if (month <= 9) return `Q3 ${year}`;
+        return `Q4 ${year}`;
     }
     
     get2025TierData(author) {
@@ -1280,12 +1356,22 @@ What specific area would you like to explore further?`;
             const sampleTitles = [
                 {
                     id: '1',
+                    titleId: 'TIT-2026-001',
                     title: 'Fourth Wing',
                     author: 'Rebecca Yarros',
+                    asin: 'B0B123456X',
+                    status: 'Ready for Launch',
                     releaseDate: '2026-03-15',
                     genre: 'Romance',
                     priority: 'High',
                     marketingTier: 'Mega Blockbuster',
+                    salesTier: 'Tier 1',
+                    pr: 'Sarah Johnson',
+                    imprint: 'Ballantine',
+                    editor: 'Jennifer Smith',
+                    amm: 'Lisa Chen',
+                    pubQuarter: 'Q1 2026',
+                    selectionStrategy: 'Data-Driven',
                     socialFollowing: 850000,
                     audioSuccess: 'High',
                     videoComfort: 'High',
@@ -1296,12 +1382,22 @@ What specific area would you like to explore further?`;
                 },
                 {
                     id: '2',
+                    titleId: 'TIT-2026-002',
                     title: 'It Starts with Us',
                     author: 'Colleen Hoover',
+                    asin: 'B0B789012Y',
+                    status: 'In Production',
                     releaseDate: '2026-06-20',
                     genre: 'Romance',
                     priority: 'High',
                     marketingTier: 'Mega Blockbuster',
+                    salesTier: 'Tier 1',
+                    pr: 'Michael Davis',
+                    imprint: 'Bantam',
+                    editor: 'Amanda Wilson',
+                    amm: 'Rachel Green',
+                    pubQuarter: 'Q2 2026',
+                    selectionStrategy: 'Editorial Choice',
                     socialFollowing: 1200000,
                     audioSuccess: 'High',
                     videoComfort: 'Medium',
@@ -1312,12 +1408,22 @@ What specific area would you like to explore further?`;
                 },
                 {
                     id: '3',
+                    titleId: 'TIT-2026-003',
                     title: 'Der Schatten des Windes',
                     author: 'Carlos Ruiz Zafón',
+                    asin: 'B0B345678Z',
+                    status: 'In Development',
                     releaseDate: '2026-09-10',
                     genre: 'Fiction',
                     priority: 'Medium',
                     marketingTier: 'Marquee Mini',
+                    salesTier: 'Tier 2',
+                    pr: 'Klaus Mueller',
+                    imprint: 'Crown',
+                    editor: 'Hans Weber',
+                    amm: 'Petra Schmidt',
+                    pubQuarter: 'Q3 2026',
+                    selectionStrategy: 'Market Opportunity',
                     socialFollowing: 250000,
                     audioSuccess: 'Medium',
                     videoComfort: 'Low',

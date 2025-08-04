@@ -111,12 +111,22 @@
                             <tr>
                                 <th><label><input type="checkbox" id="selectAll"> Select All</label></th>
                                 <th>Rank</th>
+                                <th>Title ID</th>
                                 <th>Title</th>
                                 <th>Author</th>
+                                <th>ASIN</th>
+                                <th>Status</th>
                                 <th>Release Date</th>
                                 <th>Genre</th>
                                 <th>Priority</th>
                                 <th>Marketing Tier</th>
+                                <th>Sales Tier</th>
+                                <th>PR</th>
+                                <th>Imprint</th>
+                                <th>Editor</th>
+                                <th>AMM</th>
+                                <th>Pub Quarter</th>
+                                <th>Selection Strategy</th>
                                 <th>Social Following</th>
                                 <th>Audio Success</th>
                                 <th>Video Comfort</th>
@@ -239,12 +249,30 @@
             <form id="titleForm">
                 <input type="hidden" id="titleId" />
                 <div class="form-group">
+                    <label for="titleIdField">Title ID:</label>
+                    <input type="text" id="titleIdField" placeholder="Auto-generated if empty" />
+                </div>
+                <div class="form-group">
                     <label for="bookTitle">Title:</label>
                     <input type="text" id="bookTitle" required />
                 </div>
                 <div class="form-group">
                     <label for="author">Author:</label>
                     <input type="text" id="author" required />
+                </div>
+                <div class="form-group">
+                    <label for="asin">ASIN:</label>
+                    <input type="text" id="asin" placeholder="Amazon Standard Identification Number" />
+                </div>
+                <div class="form-group">
+                    <label for="status">Status:</label>
+                    <select id="status">
+                        <option value="In Development">In Development</option>
+                        <option value="In Production">In Production</option>
+                        <option value="Ready for Launch">Ready for Launch</option>
+                        <option value="Published">Published</option>
+                        <option value="On Hold">On Hold</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="releaseDate">Release Date:</label>
@@ -289,6 +317,59 @@
                         <option value="Author Branding">Author Branding</option>
                         <option value="Gold Books">Gold Books</option>
                         <option value="Momentum">Momentum</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="salesTier">Sales Tier:</label>
+                    <select id="salesTier">
+                        <option value="Tier 1">Tier 1 (100K+ expected)</option>
+                        <option value="Tier 2">Tier 2 (50K-100K expected)</option>
+                        <option value="Tier 3">Tier 3 (20K-50K expected)</option>
+                        <option value="Tier 4">Tier 4 (<20K expected)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="pr">PR Contact:</label>
+                    <input type="text" id="pr" placeholder="PR representative name" />
+                </div>
+                <div class="form-group">
+                    <label for="imprint">Imprint:</label>
+                    <select id="imprint">
+                        <option value="Ballantine">Ballantine</option>
+                        <option value="Bantam">Bantam</option>
+                        <option value="Crown">Crown</option>
+                        <option value="Del Rey">Del Rey</option>
+                        <option value="Doubleday">Doubleday</option>
+                        <option value="Knopf">Knopf</option>
+                        <option value="Random House">Random House</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editor">Editor:</label>
+                    <input type="text" id="editor" placeholder="Editor name" />
+                </div>
+                <div class="form-group">
+                    <label for="amm">AMM (Author Marketing Manager):</label>
+                    <input type="text" id="amm" placeholder="Author Marketing Manager" />
+                </div>
+                <div class="form-group">
+                    <label for="pubQuarter">Publication Quarter:</label>
+                    <select id="pubQuarter">
+                        <option value="Q1 2026">Q1 2026 (Jan-Mar)</option>
+                        <option value="Q2 2026">Q2 2026 (Apr-Jun)</option>
+                        <option value="Q3 2026">Q3 2026 (Jul-Sep)</option>
+                        <option value="Q4 2026">Q4 2026 (Oct-Dec)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="selectionStrategy">Selection Strategy:</label>
+                    <select id="selectionStrategy">
+                        <option value="Data-Driven">Data-Driven (Analytics based)</option>
+                        <option value="Editorial Choice">Editorial Choice</option>
+                        <option value="Market Opportunity">Market Opportunity</option>
+                        <option value="Author Development">Author Development</option>
+                        <option value="Strategic Investment">Strategic Investment</option>
                     </select>
                 </div>
                 <div class="form-group">

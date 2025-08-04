@@ -1082,6 +1082,37 @@ header h1 {
     color: #007AFF;
 }
 
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    background: #f0f0f0;
+    color: #666;
+}
+
+.status-badge:contains("Published") {
+    background: #34C759;
+    color: white;
+}
+
+.status-badge:contains("Ready") {
+    background: #007AFF;
+    color: white;
+}
+
+.status-badge:contains("Production") {
+    background: #FF9500;
+    color: white;
+}
+
+.status-badge:contains("Hold") {
+    background: #FF3B30;
+    color: white;
+}
+
 .loading-spinner {
     display: inline-block;
     width: 16px;
