@@ -1,4 +1,4 @@
-class TitlePlanningTool {
+class TitlePlanningDashboard {
     constructor() {
         this.titles = JSON.parse(localStorage.getItem('titles')) || [];
         this.plans = JSON.parse(localStorage.getItem('plans')) || [];
@@ -9,13 +9,56 @@ class TitlePlanningTool {
             blockbusterTotal: 6
         };
         this.chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+        this.activeUsers = new Set();
+        this.activityPaused = false;
         
+        this.loadFromCloud();
+        this.initializeRealtime();
         this.init();
+    }
+    
+    async loadFromCloud() {
+        if (window.loadFromCloud) {
+            try {
+                const cloudTitles = await window.loadFromCloud('titles');
+                const cloudPlans = await window.loadFromCloud('plans');
+                const cloudActivities = await window.loadFromCloud('activities');
+                const cloudAllocation = await window.loadFromCloud('allocation');
+                const cloudChatHistory = await window.loadFromCloud('chatHistory');
+                
+                if (cloudTitles) this.titles = cloudTitles;
+                if (cloudPlans) this.plans = cloudPlans;
+                if (cloudActivities) this.activities = cloudActivities;
+                if (cloudAllocation) this.allocation = cloudAllocation;
+                if (cloudChatHistory) this.chatHistory = cloudChatHistory;
+                
+                // Set up real-time sync
+                if (window.syncData) {
+                    window.syncData('titles', (data) => {
+                        this.titles = data;
+                        this.renderTitles();
+                        this.updateTitleFilter();
+                    });
+                    window.syncData('plans', (data) => {
+                        this.plans = data;
+                        this.renderPlans();
+                        this.renderAllocation();
+                    });
+                    window.syncData('activities', (data) => {
+                        this.activities = data;
+                        this.renderActivity();
+                    });
+                }
+            } catch (error) {
+                console.log('Cloud load failed, using local storage');
+            }
+        }
     }
 
     init() {
         this.setupEventListeners();
         this.loadUserInfo();
+        this.renderDashboard();
         this.renderTitles();
         this.renderPlans();
         this.renderActivity();
@@ -24,6 +67,172 @@ class TitlePlanningTool {
         this.loadAllocationSettings();
         this.initializeChatbot();
         this.loadSampleData();
+        this.startDashboardUpdates();
+    }
+    
+    async initializeRealtime() {
+        if (window.realtimeSync) {
+            await window.realtimeSync.initialize();
+            
+            // Listen for real-time changes
+            window.realtimeSync.onDataChange((change) => {
+                this.handleRealtimeChange(change);
+            });
+        }
+    }
+    
+    handleRealtimeChange(change) {
+        const { dataType, data, user, timestamp } = change;
+        
+        switch (dataType) {
+            case 'titles':
+                this.titles = data;
+                this.renderTitles();
+                this.renderDashboard();
+                break;
+            case 'plans':
+                this.plans = data;
+                this.renderPlans();
+                this.renderDashboard();
+                break;
+            case 'activities':
+                this.activities = data;
+                this.renderActivity();
+                break;
+        }
+        
+        this.showRealtimeNotification(`${user} made changes`, dataType);
+    }
+    
+    showRealtimeNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = 'realtime-notification';
+        notification.innerHTML = `
+            <span class="notification-icon">🔄</span>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+    
+    renderDashboard() {
+        this.updateDashboardStats();
+        this.updateDashboardAllocation();
+        this.updateDashboardActivity();
+        this.updateTeamMembers();
+        this.updatePriorityTitles();
+    }
+    
+    updateDashboardStats() {
+        const totalTitles = this.titles.length;
+        const highPriority = this.titles.filter(t => t.priority === 'High').length;
+        const withPlans = this.plans.length;
+        
+        document.getElementById('totalTitles').textContent = totalTitles;
+        document.getElementById('highPriority').textContent = highPriority;
+        document.getElementById('withPlans').textContent = withPlans;
+    }
+    
+    updateDashboardAllocation() {
+        const marqueeUsed = this.plans.filter(p => p.campaignType === 'Marquee').length;
+        const blockbusterUsed = this.plans.filter(p => p.campaignType === 'Blockbuster').length;
+        
+        document.getElementById('dashMarqueeUsed').textContent = marqueeUsed;
+        document.getElementById('dashMarqueeTotal').textContent = this.allocation.marqueeTotal;
+        document.getElementById('dashBlockbusterUsed').textContent = blockbusterUsed;
+        document.getElementById('dashBlockbusterTotal').textContent = this.allocation.blockbusterTotal;
+        
+        const marqueePercent = (marqueeUsed / this.allocation.marqueeTotal) * 100;
+        const blockbusterPercent = (blockbusterUsed / this.allocation.blockbusterTotal) * 100;
+        
+        document.getElementById('dashMarqueeBar').style.width = `${Math.min(marqueePercent, 100)}%`;
+        document.getElementById('dashBlockbusterBar').style.width = `${Math.min(blockbusterPercent, 100)}%`;
+    }
+    
+    updateDashboardActivity() {
+        const recentActivities = this.activities.slice(0, 5);
+        const container = document.getElementById('dashboardActivity');
+        
+        container.innerHTML = recentActivities.map(activity => `
+            <div class="mini-activity">
+                <span class="activity-user">${activity.user}</span>
+                <span class="activity-text">${activity.message.substring(0, 50)}...</span>
+                <span class="activity-time">${this.getTimeAgo(new Date(activity.timestamp))}</span>
+            </div>
+        `).join('');
+    }
+    
+    updateTeamMembers() {
+        const users = [...new Set(this.activities.map(a => a.user).filter(u => u))];
+        const container = document.getElementById('teamMembers');
+        
+        container.innerHTML = users.map(user => `
+            <div class="team-member">
+                <span class="member-avatar">${user.charAt(0).toUpperCase()}</span>
+                <span class="member-name">${user}</span>
+                <span class="member-status online">●</span>
+            </div>
+        `).join('');
+        
+        document.getElementById('activeUserCount').textContent = users.length;
+    }
+    
+    updatePriorityTitles() {
+        const priorityTitles = this.titles
+            .filter(t => t.priority === 'High')
+            .sort((a, b) => (b.rankingScore || 0) - (a.rankingScore || 0))
+            .slice(0, 5);
+            
+        const container = document.getElementById('priorityTitles');
+        
+        container.innerHTML = priorityTitles.map(title => `
+            <div class="priority-title-card">
+                <div class="title-info">
+                    <h4>${title.title}</h4>
+                    <p>by ${title.author}</p>
+                </div>
+                <div class="title-meta">
+                    <span class="marketing-tier tier-${title.marketingTier?.toLowerCase()}">${title.marketingTier || 'None'}</span>
+                    <span class="social-count">${(title.socialFollowing || 0).toLocaleString()}</span>
+                </div>
+                <div class="title-actions">
+                    <button class="btn-mini" onclick="app.openPlanModal('${title.id}')">Plan</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    startDashboardUpdates() {
+        // Update dashboard every 30 seconds
+        setInterval(() => {
+            if (document.getElementById('dashboard').classList.contains('active')) {
+                this.renderDashboard();
+            }
+        }, 30000);
+    }
+    
+    toggleActivityUpdates() {
+        this.activityPaused = !this.activityPaused;
+        const btn = document.getElementById('pauseActivity');
+        btn.textContent = this.activityPaused ? 'Resume Updates' : 'Pause Updates';
+        btn.className = this.activityPaused ? 'btn-primary' : 'btn-secondary';
+    }
+    
+    clearAllActivity() {
+        if (confirm('Clear all activity history? This cannot be undone.')) {
+            this.activities = [];
+            this.saveData();
+            this.renderActivity();
+            this.renderDashboard();
+        }
     }
 
     setupEventListeners() {
@@ -57,6 +266,10 @@ class TitlePlanningTool {
         // Allocation management
         document.getElementById('updateAllocation').addEventListener('click', () => this.updateAllocation());
         
+        // Activity controls
+        document.getElementById('pauseActivity')?.addEventListener('click', () => this.toggleActivityUpdates());
+        document.getElementById('clearActivity')?.addEventListener('click', () => this.clearAllActivity());
+        
         // Excel import
         document.getElementById('importExcel').addEventListener('click', () => document.getElementById('excelImport').click());
         document.getElementById('excelImport').addEventListener('change', (e) => this.handleExcelImport(e));
@@ -82,6 +295,11 @@ class TitlePlanningTool {
         
         document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
         document.getElementById(tabName).classList.add('active');
+        
+        // Update dashboard when switching to it
+        if (tabName === 'dashboard') {
+            this.renderDashboard();
+        }
     }
 
     saveUser() {
@@ -384,15 +602,21 @@ class TitlePlanningTool {
     }
 
     addActivity(message) {
+        if (this.activityPaused) return;
+        
         const activity = {
             id: Date.now().toString(),
             message: message,
             timestamp: new Date().toISOString(),
-            user: this.currentUser
+            user: this.currentUser,
+            type: 'user_action'
         };
         
         this.activities.unshift(activity);
-        this.activities = this.activities.slice(0, 50); // Keep only last 50 activities
+        this.activities = this.activities.slice(0, 100); // Keep more activities for dashboard
+        
+        // Update total actions counter
+        document.getElementById('totalActions').textContent = this.activities.length;
         
         this.saveData();
         this.renderActivity();
@@ -407,18 +631,23 @@ class TitlePlanningTool {
             return;
         }
 
-        this.activities.forEach(activity => {
+        this.activities.forEach((activity, index) => {
             const item = document.createElement('div');
-            item.className = 'activity-item';
+            item.className = `activity-item ${index < 3 ? 'recent' : ''}`;
             
             const timeAgo = this.getTimeAgo(new Date(activity.timestamp));
+            const isCurrentUser = activity.user === this.currentUser;
             
             item.innerHTML = `
-                <div>
-                    <span class="activity-user">${activity.user || 'Unknown User'}</span>
+                <div class="activity-header">
+                    <span class="activity-user ${isCurrentUser ? 'current-user' : ''}">
+                        ${activity.user || 'Unknown User'}
+                        ${isCurrentUser ? ' (You)' : ''}
+                    </span>
                     <span class="activity-time">${timeAgo}</span>
+                    <span class="activity-indicator live">●</span>
                 </div>
-                <div>${activity.message}</div>
+                <div class="activity-message">${activity.message}</div>
             `;
             
             feed.appendChild(item);
@@ -517,12 +746,24 @@ class TitlePlanningTool {
         else if (blockbusterPercent >= 80) blockbusterBar.classList.add('warning');
     }
     
-    saveData() {
+    async saveData() {
+        // Save to localStorage as backup
         localStorage.setItem('titles', JSON.stringify(this.titles));
         localStorage.setItem('plans', JSON.stringify(this.plans));
         localStorage.setItem('activities', JSON.stringify(this.activities));
         localStorage.setItem('allocation', JSON.stringify(this.allocation));
         localStorage.setItem('chatHistory', JSON.stringify(this.chatHistory));
+        
+        // Real-time sync
+        if (window.realtimeSync) {
+            await window.realtimeSync.syncData('titles', this.titles);
+            await window.realtimeSync.syncData('plans', this.plans);
+            await window.realtimeSync.syncData('activities', this.activities);
+            await window.realtimeSync.syncData('allocation', this.allocation);
+        }
+        
+        // Update dashboard
+        this.renderDashboard();
     }
 
     exportData() {
@@ -1006,8 +1247,8 @@ What specific area would you like to explore further?`;
     }
 }
 
-// Initialize the application
-const app = new TitlePlanningTool();
+// Initialize the dashboard
+const app = new TitlePlanningDashboard();
 
 // Excel processing is now handled by SheetJS library loaded via CDN
 // The app can now properly import and process Excel files with title data

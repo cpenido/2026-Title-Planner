@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 Title Marketing Support Planner</title>
+    <title>2026 Title Planning Dashboard</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>2026 Title Marketing Support Planner</h1>
+            <h1>2026 Title Planning Dashboard</h1>
+            <div class="dashboard-status">
+                <span id="connectionStatus" class="status-indicator offline">●</span>
+                <span id="activeUsers">1 user online</span>
+            </div>
             <div class="user-info">
                 <input type="text" id="userName" placeholder="Enter your name" />
                 <button id="saveUser">Set User</button>
@@ -17,19 +21,71 @@
         </header>
 
         <nav class="tabs">
-            <button class="tab-btn active" data-tab="titles">Title Overview</button>
+            <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-btn" data-tab="titles">Title Management</button>
             <button class="tab-btn" data-tab="planning">Marketing Plans</button>
-            <button class="tab-btn" data-tab="allocation">Campaign Allocation</button>
             <button class="tab-btn" data-tab="chatbot">AI Assistant</button>
-            <button class="tab-btn" data-tab="collaboration">Team Collaboration</button>
+            <button class="tab-btn" data-tab="collaboration">Live Activity</button>
         </nav>
 
         <main>
-            <!-- Title Overview Tab -->
-            <div id="titles" class="tab-content active">
+            <!-- Dashboard Overview Tab -->
+            <div id="dashboard" class="tab-content active">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Title Summary</h3>
+                        <div class="summary-stats">
+                            <div class="stat">
+                                <span class="stat-number" id="totalTitles">0</span>
+                                <span class="stat-label">Total Titles</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number" id="highPriority">0</span>
+                                <span class="stat-label">High Priority</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number" id="withPlans">0</span>
+                                <span class="stat-label">With Plans</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Campaign Allocation</h3>
+                        <div class="allocation-mini">
+                            <div class="mini-counter">
+                                <span>Marquee: <span id="dashMarqueeUsed">0</span>/<span id="dashMarqueeTotal">12</span></span>
+                                <div class="mini-bar"><div id="dashMarqueeBar" class="mini-progress"></div></div>
+                            </div>
+                            <div class="mini-counter">
+                                <span>Blockbuster: <span id="dashBlockbusterUsed">0</span>/<span id="dashBlockbusterTotal">6</span></span>
+                                <div class="mini-bar"><div id="dashBlockbusterBar" class="mini-progress"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Recent Activity</h3>
+                        <div class="recent-activity" id="dashboardActivity"></div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Team Members</h3>
+                        <div class="team-list" id="teamMembers"></div>
+                    </div>
+                    
+                    <div class="dashboard-card full-width">
+                        <h3>Top Priority Titles</h3>
+                        <div class="priority-titles" id="priorityTitles"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Title Management Tab -->
+            <div id="titles" class="tab-content">
                 <div class="section-header">
-                    <h2>2026 Title Releases</h2>
+                    <h2>Title Management</h2>
                     <div class="header-actions">
+                        <div class="sync-status" id="syncStatus">🟢 Real-time sync active</div>
                         <input type="file" id="excelImport" accept=".xlsx,.xls" style="display: none;">
                         <button id="importExcel" class="btn-secondary">Import Excel</button>
                         <button id="addTitle" class="btn-primary">Add New Title</button>
@@ -140,12 +196,22 @@
                 </div>
             </div>
 
-            <!-- Team Collaboration Tab -->
+            <!-- Live Activity Tab -->
             <div id="collaboration" class="tab-content">
                 <div class="section-header">
-                    <h2>Team Activity & Comments</h2>
+                    <h2>Live Team Activity</h2>
+                    <div class="activity-controls">
+                        <button id="pauseActivity" class="btn-secondary">Pause Updates</button>
+                        <button id="clearActivity" class="btn-secondary">Clear History</button>
+                    </div>
                 </div>
-                <div class="activity-feed" id="activityFeed"></div>
+                <div class="live-activity-container">
+                    <div class="activity-stats">
+                        <span>Total Actions: <span id="totalActions">0</span></span>
+                        <span>Active Users: <span id="activeUserCount">1</span></span>
+                    </div>
+                    <div class="activity-feed" id="activityFeed"></div>
+                </div>
             </div>
         </main>
     </div>
@@ -310,6 +376,44 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="realtime-sync.js"></script>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Replace with your Firebase config
+        const firebaseConfig = {
+            apiKey: "your-api-key",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id"
+        };
+        
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            
+            window.saveToCloud = async (key, data) => {
+                await setDoc(doc(db, 'titlePlanner', key), { data, lastUpdated: new Date() });
+            };
+            
+            window.loadFromCloud = async (key) => {
+                const docSnap = await getDoc(doc(db, 'titlePlanner', key));
+                return docSnap.exists() ? docSnap.data().data : null;
+            };
+            
+            window.syncData = (key, callback) => {
+                onSnapshot(doc(db, 'titlePlanner', key), (doc) => {
+                    if (doc.exists()) callback(doc.data().data);
+                });
+            };
+        } catch (error) {
+            console.log('Firebase not configured, using local storage only');
+        }
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
