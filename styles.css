@@ -408,6 +408,22 @@ header h1 {
     background: #e0e0e0;
 }
 
+.btn-danger {
+    background: #FF3B30;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.btn-danger:hover {
+    background: #d70015;
+}
+
 .titles-table-container {
     background: white;
     border-radius: 12px;

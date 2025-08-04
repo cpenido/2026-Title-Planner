@@ -88,6 +88,7 @@
                         <div class="sync-status" id="syncStatus">🟢 Real-time sync active</div>
                         <input type="file" id="excelImport" accept=".xlsx,.xls" style="display: none;">
                         <button id="importExcel" class="btn-secondary">Import Excel</button>
+                        <button id="bulkDelete" class="btn-danger">Bulk Delete</button>
                         <button id="addTitle" class="btn-primary">Add New Title</button>
                     </div>
                 </div>
@@ -95,6 +96,7 @@
                     <table class="titles-table" id="titlesTable">
                         <thead>
                             <tr>
+                                <th><input type="checkbox" id="selectAll"></th>
                                 <th>Rank</th>
                                 <th>Title</th>
                                 <th>Author</th>

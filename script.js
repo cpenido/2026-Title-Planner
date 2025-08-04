@@ -274,6 +274,10 @@ class TitlePlanningDashboard {
         document.getElementById('importExcel').addEventListener('click', () => document.getElementById('excelImport').click());
         document.getElementById('excelImport').addEventListener('change', (e) => this.handleExcelImport(e));
         
+        // Bulk delete
+        document.getElementById('bulkDelete').addEventListener('click', () => this.bulkDeleteTitles());
+        document.getElementById('selectAll').addEventListener('change', (e) => this.toggleSelectAll(e.target.checked));
+        
         // Chatbot
         document.getElementById('sendChat').addEventListener('click', () => this.sendChatMessage());
         document.getElementById('chatInput').addEventListener('keypress', (e) => {
@@ -501,6 +505,7 @@ class TitlePlanningDashboard {
             const region = title.region || 'US';
             
             row.innerHTML = `
+                <td><input type="checkbox" class="title-checkbox" data-id="${title.id}"></td>
                 <td><span class="ranking-badge">${index + 1}</span></td>
                 <td class="title-cell">${title.title}</td>
                 <td class="author-cell">${title.author}</td>
@@ -1244,6 +1249,37 @@ What specific area would you like to explore further?`;
             
             this.saveData();
         }
+    }
+    
+    bulkDeleteTitles() {
+        const checkboxes = document.querySelectorAll('.title-checkbox');
+        const selectedIds = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.dataset.id);
+            
+        if (selectedIds.length === 0) {
+            alert('Please select titles to delete');
+            return;
+        }
+        
+        if (confirm(`Delete ${selectedIds.length} selected titles? This cannot be undone.`)) {
+            this.titles = this.titles.filter(t => !selectedIds.includes(t.id));
+            this.plans = this.plans.filter(p => !selectedIds.includes(p.titleId));
+            
+            this.addActivity(`${this.currentUser} bulk deleted ${selectedIds.length} titles`);
+            this.saveData();
+            this.renderTitles();
+            this.renderPlans();
+            this.updateTitleFilter();
+            
+            document.getElementById('selectAll').checked = false;
+        }
+    }
+    
+    toggleSelectAll(checked) {
+        document.querySelectorAll('.title-checkbox').forEach(cb => {
+            cb.checked = checked;
+        });
     }
 }
 
