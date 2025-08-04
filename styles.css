@@ -450,6 +450,41 @@ header h1 {
     transform: scale(1.2);
 }
 
+/* Filter controls styling */
+.filter-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    flex-wrap: wrap;
+}
+
+.filter-controls input,
+.filter-controls select {
+    padding: 8px 12px;
+    border: 1px solid #d1d1d6;
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+.filter-controls input[type="text"] {
+    flex: 1;
+    min-width: 150px;
+}
+
+.filter-controls input[type="date"] {
+    min-width: 140px;
+}
+
+.filter-controls button {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
 .titles-table-container {
     background: white;
     border-radius: 12px;

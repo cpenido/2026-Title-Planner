@@ -278,6 +278,16 @@ class TitlePlanningDashboard {
         document.getElementById('bulkDelete').addEventListener('click', () => this.bulkDeleteTitles());
         document.getElementById('selectAll').addEventListener('change', (e) => this.toggleSelectAll(e.target.checked));
         
+        // Filters
+        document.getElementById('titleSearch').addEventListener('input', () => this.applyFilters());
+        document.getElementById('authorSearch').addEventListener('input', () => this.applyFilters());
+        document.getElementById('dateFilter').addEventListener('change', () => this.applyFilters());
+        document.getElementById('genreFilter').addEventListener('change', () => this.applyFilters());
+        document.getElementById('priorityFilter').addEventListener('change', () => this.applyFilters());
+        document.getElementById('tierFilter').addEventListener('change', () => this.applyFilters());
+        document.getElementById('regionFilter').addEventListener('change', () => this.applyFilters());
+        document.getElementById('clearFilters').addEventListener('click', () => this.clearFilters());
+        
         // Chatbot
         document.getElementById('sendChat').addEventListener('click', () => this.sendChatMessage());
         document.getElementById('chatInput').addEventListener('keypress', (e) => {
@@ -488,6 +498,7 @@ class TitlePlanningDashboard {
     }
 
     renderTitles() {
+        this.populateFilterOptions();
         const tbody = document.getElementById('titlesTableBody');
         tbody.innerHTML = '';
 
@@ -947,41 +958,51 @@ class TitlePlanningDashboard {
         let score = 0;
         
         // Previous tier performance (40% weight)
-        if (tier2025Data?.tier === 'Marquee') score += 40;
-        else if (tier2025Data?.tier === 'Blockbuster') score += 25;
-        else if (tier2025Data?.tier === 'Standard') score += 10;
+        if (tier2025Data?.tier === 'Mega Blockbuster') score += 50;
+        else if (tier2025Data?.tier === 'Marquee Me') score += 40;
+        else if (tier2025Data?.tier === 'Marquee Mini') score += 35;
+        else if (tier2025Data?.tier === 'BPub/Audio') score += 25;
+        else if (tier2025Data?.tier === 'Author Branding') score += 20;
+        else if (tier2025Data?.tier === 'Gold Books') score += 15;
+        else if (tier2025Data?.tier === 'Momentum') score += 10;
         
         // Social following (30% weight)
-        if (socialFollowing >= 500000) score += 30;
+        if (socialFollowing >= 1000000) score += 30;
+        else if (socialFollowing >= 500000) score += 25;
         else if (socialFollowing >= 100000) score += 20;
         else if (socialFollowing >= 50000) score += 10;
         
         // Expected sales (20% weight)
-        if (row.expectedSales >= 50000) score += 20;
-        else if (row.expectedSales >= 20000) score += 12;
-        else if (row.expectedSales >= 10000) score += 6;
+        if (row.expectedSales >= 100000) score += 20;
+        else if (row.expectedSales >= 50000) score += 15;
+        else if (row.expectedSales >= 20000) score += 10;
+        else if (row.expectedSales >= 10000) score += 5;
         
         // Audio/Video performance (10% weight)
         if (row.audioSuccess === 'High' && row.videoComfort === 'High') score += 10;
         else if (row.audioSuccess === 'High' || row.videoComfort === 'High') score += 5;
         
         // Determine tier based on score
-        if (score >= 70) return 'Marquee';
-        if (score >= 40) return 'Blockbuster';
-        return 'Standard';
+        if (score >= 80) return 'Mega Blockbuster';
+        if (score >= 65) return 'Marquee Me';
+        if (score >= 50) return 'Marquee Mini';
+        if (score >= 35) return 'BPub/Audio';
+        if (score >= 25) return 'Author Branding';
+        if (score >= 15) return 'Gold Books';
+        return 'Momentum';
     }
     
     get2025TierData(author) {
         // Simulate cross-referencing with IN+PROGRESS+full+2025+Title+Planning.xlsx
         const mockData = {
-            'Rebecca Yarros': { tier: 'Marquee', performance: 'High', previousBudget: 150000 },
-            'Colleen Hoover': { tier: 'Marquee', performance: 'High', previousBudget: 200000 },
-            'Taylor Jenkins Reid': { tier: 'Blockbuster', performance: 'High', previousBudget: 75000 },
-            'Alice Hoffman': { tier: 'Blockbuster', performance: 'Medium', previousBudget: 50000 },
-            'Lucinda Berry': { tier: 'Standard', performance: 'Medium', previousBudget: 25000 },
-            'Melissa de la Cruz': { tier: 'Blockbuster', performance: 'High', previousBudget: 60000 },
-            'Andrew Sean Greer': { tier: 'Standard', performance: 'Medium', previousBudget: 20000 },
-            'Elin Hilderbrand': { tier: 'Blockbuster', performance: 'High', previousBudget: 80000 }
+            'Rebecca Yarros': { tier: 'Mega Blockbuster', performance: 'High', previousBudget: 200000 },
+            'Colleen Hoover': { tier: 'Mega Blockbuster', performance: 'High', previousBudget: 250000 },
+            'Taylor Jenkins Reid': { tier: 'Marquee Me', performance: 'High', previousBudget: 150000 },
+            'Alice Hoffman': { tier: 'Marquee Mini', performance: 'Medium', previousBudget: 100000 },
+            'Lucinda Berry': { tier: 'BPub/Audio', performance: 'Medium', previousBudget: 50000 },
+            'Melissa de la Cruz': { tier: 'Author Branding', performance: 'High', previousBudget: 75000 },
+            'Andrew Sean Greer': { tier: 'Gold Books', performance: 'Medium', previousBudget: 40000 },
+            'Elin Hilderbrand': { tier: 'Momentum', performance: 'High', previousBudget: 30000 }
         };
         return mockData[author];
     }
@@ -1215,7 +1236,7 @@ What specific area would you like to explore further?`;
                     releaseDate: '2026-03-15',
                     genre: 'Romance',
                     priority: 'High',
-                    marketingTier: 'Marquee',
+                    marketingTier: 'Mega Blockbuster',
                     socialFollowing: 850000,
                     audioSuccess: 'High',
                     videoComfort: 'High',
@@ -1231,7 +1252,7 @@ What specific area would you like to explore further?`;
                     releaseDate: '2026-06-20',
                     genre: 'Romance',
                     priority: 'High',
-                    marketingTier: 'Marquee',
+                    marketingTier: 'Mega Blockbuster',
                     socialFollowing: 1200000,
                     audioSuccess: 'High',
                     videoComfort: 'Medium',
@@ -1280,6 +1301,75 @@ What specific area would you like to explore further?`;
         document.querySelectorAll('.title-checkbox').forEach(cb => {
             cb.checked = checked;
         });
+    }
+    
+    populateFilterOptions() {
+        const genres = [...new Set(this.titles.map(t => t.genre))].sort();
+        const priorities = ['High', 'Medium', 'Low'];
+        const tiers = ['Mega Blockbuster', 'Marquee Me', 'Marquee Mini', 'BPub/Audio', 'Author Branding', 'Gold Books', 'Momentum'];
+        const regions = [...new Set(this.titles.map(t => t.region))].sort();
+        
+        this.populateSelect('genreFilter', genres);
+        this.populateSelect('priorityFilter', priorities);
+        this.populateSelect('tierFilter', tiers);
+        this.populateSelect('regionFilter', regions);
+    }
+    
+    populateSelect(selectId, options) {
+        const select = document.getElementById(selectId);
+        const currentValue = select.value;
+        select.innerHTML = `<option value="">${select.options[0].text}</option>`;
+        options.forEach(option => {
+            if (option) {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.textContent = option;
+                select.appendChild(opt);
+            }
+        });
+        select.value = currentValue;
+    }
+    
+    applyFilters() {
+        const titleSearch = document.getElementById('titleSearch').value.toLowerCase();
+        const authorSearch = document.getElementById('authorSearch').value.toLowerCase();
+        const dateFilter = document.getElementById('dateFilter').value;
+        const genreFilter = document.getElementById('genreFilter').value;
+        const priorityFilter = document.getElementById('priorityFilter').value;
+        const tierFilter = document.getElementById('tierFilter').value;
+        const regionFilter = document.getElementById('regionFilter').value;
+        
+        const rows = document.querySelectorAll('#titlesTableBody tr');
+        rows.forEach(row => {
+            const title = row.cells[2].textContent.toLowerCase();
+            const author = row.cells[3].textContent.toLowerCase();
+            const date = row.cells[4].textContent;
+            const genre = row.cells[5].textContent;
+            const priority = row.cells[6].textContent;
+            const tier = row.cells[7].textContent;
+            const region = row.cells[10].textContent;
+            
+            const matchesTitle = !titleSearch || title.includes(titleSearch);
+            const matchesAuthor = !authorSearch || author.includes(authorSearch);
+            const matchesDate = !dateFilter || date.includes(dateFilter);
+            const matchesGenre = !genreFilter || genre === genreFilter;
+            const matchesPriority = !priorityFilter || priority === priorityFilter;
+            const matchesTier = !tierFilter || tier.includes(tierFilter);
+            const matchesRegion = !regionFilter || region === regionFilter;
+            
+            row.style.display = matchesTitle && matchesAuthor && matchesDate && matchesGenre && matchesPriority && matchesTier && matchesRegion ? '' : 'none';
+        });
+    }
+    
+    clearFilters() {
+        document.getElementById('titleSearch').value = '';
+        document.getElementById('authorSearch').value = '';
+        document.getElementById('dateFilter').value = '';
+        document.getElementById('genreFilter').value = '';
+        document.getElementById('priorityFilter').value = '';
+        document.getElementById('tierFilter').value = '';
+        document.getElementById('regionFilter').value = '';
+        this.applyFilters();
     }
 }
 

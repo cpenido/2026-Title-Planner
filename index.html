@@ -92,6 +92,16 @@
                         <button id="addTitle" class="btn-primary">Add New Title</button>
                     </div>
                 </div>
+                <div class="filter-controls">
+                    <input type="text" id="titleSearch" placeholder="Search titles...">
+                    <input type="text" id="authorSearch" placeholder="Search authors...">
+                    <input type="date" id="dateFilter" placeholder="Release date">
+                    <select id="genreFilter"><option value="">All Genres</option></select>
+                    <select id="priorityFilter"><option value="">All Priorities</option></select>
+                    <select id="tierFilter"><option value="">All Marketing Tiers</option></select>
+                    <select id="regionFilter"><option value="">All Regions</option></select>
+                    <button id="clearFilters" class="btn-secondary">Clear Filters</button>
+                </div>
                 <div class="titles-table-container">
                     <table class="titles-table" id="titlesTable">
                         <thead>
@@ -269,9 +279,13 @@
                     <label for="marketingTier">Recommended Marketing Tier:</label>
                     <select id="marketingTier">
                         <option value="">Auto-determine from data</option>
-                        <option value="Marquee">Marquee</option>
-                        <option value="Blockbuster">Blockbuster</option>
-                        <option value="Standard">Standard</option>
+                        <option value="Mega Blockbuster">Mega Blockbuster</option>
+                        <option value="Marquee Me">Marquee Me</option>
+                        <option value="Marquee Mini">Marquee Mini</option>
+                        <option value="BPub/Audio">BPub/Audio</option>
+                        <option value="Author Branding">Author Branding</option>
+                        <option value="Gold Books">Gold Books</option>
+                        <option value="Momentum">Momentum</option>
                     </select>
                 </div>
                 <div class="form-group">
