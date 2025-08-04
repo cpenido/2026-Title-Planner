@@ -848,28 +848,18 @@ class TitlePlanningDashboard {
         localStorage.setItem('allocation', JSON.stringify(this.allocation));
         localStorage.setItem('chatHistory', JSON.stringify(this.chatHistory));
         
-        // Save to shared server for multi-user sync
+        // Save to cloud for multi-user sync
         const data = {
             titles: this.titles,
             plans: this.plans,
             activities: this.activities,
             allocation: this.allocation,
             chatHistory: this.chatHistory,
-            lastUpdate: Date.now(),
             updatedBy: this.currentUser
         };
         
-        try {
-            await fetch('https://api.jsonbin.io/v3/b/676a1b2c8e4aa6046a0b1234', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': '$2a$10$9vKvO9QyP5l8W8mIFuZ9Q.5tY7gH3pL2nR4sT6uV8wX0yZ1aB2cD3e'
-                },
-                body: JSON.stringify(data)
-            });
-        } catch (error) {
-            console.log('Cloud sync failed, using local only');
+        if (window.cloudSync) {
+            await window.cloudSync.saveToCloud(data);
         }
         
         this.renderDashboard();
@@ -1127,31 +1117,24 @@ class TitlePlanningDashboard {
     }
     
     setupRealtimeSync() {
-        // Poll for changes from server every 3 seconds
-        setInterval(() => {
-            this.checkServerUpdates();
-        }, 3000);
+        // Listen for cloud data changes
+        window.addEventListener('cloudDataChanged', (event) => {
+            const serverData = event.detail;
+            if (serverData.updatedBy !== this.currentUser) {
+                this.syncFromServer(serverData);
+            }
+        });
+        
+        // Load initial data from cloud
+        this.loadInitialCloudData();
     }
     
-    async checkServerUpdates() {
-        try {
-            const response = await fetch('https://api.jsonbin.io/v3/b/676a1b2c8e4aa6046a0b1234/latest', {
-                headers: {
-                    'X-Master-Key': '$2a$10$9vKvO9QyP5l8W8mIFuZ9Q.5tY7gH3pL2nR4sT6uV8wX0yZ1aB2cD3e'
-                }
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                const serverData = result.record;
-                
-                if (serverData.lastUpdate && serverData.lastUpdate !== this.lastKnownUpdate && serverData.updatedBy !== this.currentUser) {
-                    this.lastKnownUpdate = serverData.lastUpdate;
-                    this.syncFromServer(serverData);
-                }
+    async loadInitialCloudData() {
+        if (window.cloudSync) {
+            const cloudData = await window.cloudSync.loadFromCloud();
+            if (cloudData && cloudData.titles) {
+                this.syncFromServer(cloudData);
             }
-        } catch (error) {
-            console.log('Server check failed');
         }
     }
     
@@ -1161,12 +1144,14 @@ class TitlePlanningDashboard {
         this.plans = serverData.plans || [];
         this.activities = serverData.activities || [];
         this.allocation = serverData.allocation || { marqueeTotal: 12, blockbusterTotal: 6 };
+        this.chatHistory = serverData.chatHistory || [];
         
         // Update localStorage with server data
         localStorage.setItem('titles', JSON.stringify(this.titles));
         localStorage.setItem('plans', JSON.stringify(this.plans));
         localStorage.setItem('activities', JSON.stringify(this.activities));
         localStorage.setItem('allocation', JSON.stringify(this.allocation));
+        localStorage.setItem('chatHistory', JSON.stringify(this.chatHistory));
         
         // Re-render everything
         this.renderTitles();
@@ -1175,22 +1160,30 @@ class TitlePlanningDashboard {
         this.renderAllocation();
         this.updateTitleFilter();
         this.renderDashboard();
+        this.loadChatHistory();
         
         // Show notification
         this.showUpdateNotification(serverData.updatedBy);
     }
     
     showUpdateNotification(user) {
+        if (!user || user === this.currentUser) return;
+        
         const notification = document.createElement('div');
         notification.style.cssText = `
             position: fixed; top: 20px; right: 20px; background: #007AFF; color: white;
             padding: 12px 16px; border-radius: 8px; z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-size: 14px;
         `;
-        notification.textContent = `Updated by ${user}`;
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>🔄</span>
+                <span>Updated by ${user}</span>
+            </div>
+        `;
         document.body.appendChild(notification);
         
-        setTimeout(() => notification.remove(), 3000);
+        setTimeout(() => notification.remove(), 4000);
     }
     
     getQuarterFromDate(dateString) {
