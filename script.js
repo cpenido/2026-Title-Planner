@@ -922,8 +922,10 @@ class TitlePlanningDashboard {
             headers.forEach((header, index) => {
                 const value = row[index];
                 
-                // Map common column names to our data structure
-                if (header.includes('title_id') || header.includes('titleid')) {
+                // Map first column (A) as Title ID regardless of header name
+                if (index === 0) {
+                    obj.titleId = value;
+                } else if (header.includes('title_id') || header.includes('titleid')) {
                     obj.titleId = value;
                 } else if (header.includes('title') || header.includes('book')) {
                     obj.title = value;
