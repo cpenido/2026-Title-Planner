@@ -1157,12 +1157,14 @@ class TitlePlanningDashboard {
     }
     
     async loadInitialCloudData() {
-        if (window.cloudSync) {
-            const cloudData = await window.cloudSync.loadFromCloud();
-            if (cloudData && cloudData.titles) {
-                this.syncFromServer(cloudData);
+        setTimeout(async () => {
+            if (window.realCloudSync) {
+                const cloudData = await window.realCloudSync.loadFromCloud();
+                if (cloudData && cloudData.titles) {
+                    this.syncFromServer(cloudData);
+                }
             }
-        }
+        }, 1000);
     }
     
     syncFromServer(serverData) {
@@ -1188,6 +1190,9 @@ class TitlePlanningDashboard {
         this.updateTitleFilter();
         this.renderDashboard();
         this.loadChatHistory();
+        
+        // Update total actions counter
+        document.getElementById('totalActions').textContent = this.activities.length;
         
         // Show notification
         this.showUpdateNotification(serverData.updatedBy);
