@@ -10,16 +10,35 @@ class FirebaseSync {
     }
     
     getOrCreateSession() {
-        let sessionId = localStorage.getItem('title-planner-session');
+        // Check URL for session parameter first
+        const urlParams = new URLSearchParams(window.location.search);
+        let sessionId = urlParams.get('session');
+        
+        if (!sessionId) {
+            sessionId = localStorage.getItem('title-planner-session');
+        }
+        
         if (!sessionId) {
             sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             localStorage.setItem('title-planner-session', sessionId);
             
-            // Show session ID for sharing
+            // Update URL with session parameter
+            const newUrl = `${window.location.origin}${window.location.pathname}?session=${sessionId}`;
+            window.history.replaceState({}, '', newUrl);
+            
+            // Show copyable URL
             setTimeout(() => {
-                alert(`Share this Session ID with other users: ${sessionId}\n\nOr share this URL: ${window.location.origin}${window.location.pathname}?session=${sessionId}`);
+                const shareUrl = newUrl;
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert(`Session URL copied to clipboard!\n\nShare this URL: ${shareUrl}`);
+                }).catch(() => {
+                    alert(`Share this URL with other users:\n\n${shareUrl}`);
+                });
             }, 1000);
+        } else {
+            localStorage.setItem('title-planner-session', sessionId);
         }
+        
         return sessionId;
     }
     
@@ -89,7 +108,30 @@ class FirebaseSync {
             onlineUsers: []
         };
     }
+    
+    getSessionUrl() {
+        return `${window.location.origin}${window.location.pathname}?session=${this.sessionId}`;
+    }
+    
+    copySessionUrl() {
+        const url = this.getSessionUrl();
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Session URL copied to clipboard!');
+        }).catch(() => {
+            alert(`Copy this URL to share:\n\n${url}`);
+        });
+    }
 }
 
 // Initialize Firebase sync
 window.realCloudSync = new FirebaseSync();
+
+// Add copy button functionality
+window.addEventListener('load', () => {
+    const copyBtn = document.getElementById('copySessionUrl');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            window.realCloudSync.copySessionUrl();
+        });
+    }
+});
