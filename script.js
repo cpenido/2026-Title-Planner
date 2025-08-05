@@ -1,5 +1,21 @@
+// Access control for Amazon employees
+function checkAmazonAccess() {
+    const email = prompt('Enter your Amazon email to access the dashboard:');
+    if (!email || !email.endsWith('@amazon.com')) {
+        alert('Access denied. This dashboard is restricted to Amazon employees only.');
+        document.body.innerHTML = '<div style="text-align: center; padding: 50px;"><h1>Access Denied</h1><p>This dashboard is restricted to Amazon employees.</p></div>';
+        return false;
+    }
+    return true;
+}
+
 class TitlePlanningDashboard {
     constructor() {
+        // Check access before initializing
+        if (!checkAmazonAccess()) {
+            return;
+        }
+        
         this.titles = JSON.parse(localStorage.getItem('titles')) || [];
         this.plans = JSON.parse(localStorage.getItem('plans')) || [];
         this.activities = JSON.parse(localStorage.getItem('activities')) || [];
