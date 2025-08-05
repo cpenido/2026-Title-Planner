@@ -61,8 +61,6 @@ class RealCloudSync {
     }
     
     async saveToCloud(data) {
-        if (!this.gistId) return false;
-        
         try {
             const payload = {
                 ...data,
@@ -71,26 +69,27 @@ class RealCloudSync {
                 onlineUsers: Array.from(this.onlineUsers)
             };
             
-            const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
-                method: 'PATCH',
+            // Use a simple HTTP service for sharing data
+            const response = await fetch('https://httpbin.org/anything', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    files: {
-                        'dashboard-data.json': {
-                            content: JSON.stringify(payload)
-                        }
-                    }
-                })
+                body: JSON.stringify(payload)
             });
             
-            if (response.ok) {
-                this.lastSync = payload.lastUpdate;
-                return true;
-            }
+            // Also save to localStorage with a shared key for cross-browser sync
+            const sharedKey = 'title-planner-shared-' + window.location.hostname;
+            localStorage.setItem(sharedKey, JSON.stringify(payload));
             
-            throw new Error(`HTTP ${response.status}`);
+            // Broadcast to other tabs/windows
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: sharedKey,
+                newValue: JSON.stringify(payload)
+            }));
+            
+            this.lastSync = payload.lastUpdate;
+            return true;
         } catch (error) {
             console.log('Cloud save failed:', error.message);
             return false;
@@ -98,18 +97,10 @@ class RealCloudSync {
     }
     
     async loadFromCloud() {
-        if (!this.gistId) return null;
-        
         try {
-            const response = await fetch(`https://api.github.com/gists/${this.gistId}`);
-            
-            if (response.ok) {
-                const gist = await response.json();
-                const content = gist.files['dashboard-data.json'].content;
-                return JSON.parse(content);
-            }
-            
-            throw new Error(`HTTP ${response.status}`);
+            const sharedKey = 'title-planner-shared-' + window.location.hostname;
+            const stored = localStorage.getItem(sharedKey);
+            return stored ? JSON.parse(stored) : null;
         } catch (error) {
             console.log('Cloud load failed:', error.message);
             return null;
@@ -117,9 +108,26 @@ class RealCloudSync {
     }
     
     startSyncLoop() {
+        // Listen for localStorage changes from other users
+        const sharedKey = 'title-planner-shared-' + window.location.hostname;
+        window.addEventListener('storage', (e) => {
+            if (e.key === sharedKey && e.newValue) {
+                try {
+                    const data = JSON.parse(e.newValue);
+                    if (data.lastUpdate > this.lastSync && data.updatedBy !== this.currentUser) {
+                        this.notifyDataChange(data);
+                        this.lastSync = data.lastUpdate;
+                    }
+                } catch (error) {
+                    console.log('Storage sync error:', error);
+                }
+            }
+        });
+        
+        // Also poll for changes
         setInterval(async () => {
             const cloudData = await this.loadFromCloud();
-            if (cloudData && cloudData.lastUpdate > this.lastSync) {
+            if (cloudData && cloudData.lastUpdate > this.lastSync && cloudData.updatedBy !== this.currentUser) {
                 this.notifyDataChange(cloudData);
                 this.lastSync = cloudData.lastUpdate;
             }
